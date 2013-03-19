@@ -14,8 +14,8 @@ to setup
   set-default-shape lego-robots "car top"
   set-default-shape lego-robotsac "car top"
   draw-world
-  create-lego-robots 1 [set color blue set size 4 setxy -13 -17 set heading 0 update-sensors-blue]
-  if green-car = true [create-lego-robotsac 1 [set color green set size 4 setxy 13 -17 set heading 0 update-sensors-green]]
+  if blue-car = true [create-lego-robots 1 [set color blue set size 4 setxy -17 13 set heading 90 update-sensors-blue]]
+  if green-car = true [create-lego-robotsac 1 [set color green set size 4 setxy -17 -13 set heading 90 update-sensors-green]]
   reset-ticks
 end
 
@@ -102,7 +102,7 @@ end
 to detect-car
   set nearby-classmates other turtles in-radius 4
      if any? nearby-classmates
-     [rt 90 fd 1 lt 90 fd 2]
+     [rt 90 fd 2 lt 90 fd 2]
 end
 
 to update-ultrasound
@@ -198,7 +198,11 @@ end
 to update-plot
   set-current-plot "Ultrasound"
   set-current-plot-pen "distance"
-  plot [ultrasound] of lego-robot 0         
+  if blue-car = true[
+  plot [ultrasound] of lego-robot 0 ]
+  if green-car = true[
+    ifelse blue-car = true[][
+  plot [ultrasound] of lego-robotac 0 ]]   
   if ticks > 1000                         
   [set-plot-x-range (ticks - 1000) ticks] 
 end
@@ -263,10 +267,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-10
-56
-210
-89
+9
+45
+209
+78
 NIL
 turnaway-after-bump-blue
 T
@@ -296,9 +300,9 @@ HORIZONTAL
 
 BUTTON
 69
-146
+118
 132
-179
+151
 NIL
 edge
 T
@@ -312,10 +316,10 @@ NIL
 1
 
 BUTTON
-52
-204
-140
-237
+56
+157
+144
+190
 NIL
 pendown
 NIL
@@ -359,10 +363,10 @@ moving-average?
 -1000
 
 BUTTON
-5
-98
-214
-131
+4
+81
+213
+114
 NIL
 turnaway-after-bump-green
 T
@@ -382,7 +386,7 @@ SWITCH
 355
 car-detection
 car-detection
-1
+0
 1
 -1000
 
@@ -393,7 +397,7 @@ SWITCH
 315
 extra-wall
 extra-wall
-1
+0
 1
 -1000
 
@@ -404,9 +408,60 @@ SWITCH
 278
 green-car
 green-car
-1
+0
 1
 -1000
+
+SWITCH
+42
+208
+151
+241
+blue-car
+blue-car
+0
+1
+-1000
+
+TEXTBOX
+162
+213
+220
+241
+Task 1, 3, 4, 5
+11
+0.0
+1
+
+TEXTBOX
+161
+249
+210
+277
+Task 2, 4, 5
+11
+0.0
+1
+
+TEXTBOX
+161
+293
+210
+321
+Task 3, 5
+11
+0.0
+1
+
+TEXTBOX
+175
+331
+325
+349
+Task 4, 5
+11
+0.0
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
