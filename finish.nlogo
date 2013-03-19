@@ -4,142 +4,143 @@ breed [lego-robotsac lego-robotac]
 lego-robots-own [ultrasound bump]
 lego-robotsac-own [ultrasound bump]
 
+turtles-own
+[
+  nearby-classmates         ;; agentset of turtles within some specified radius
+]
+
 to setup
- clear-all 
+  clear-all 
   set-default-shape lego-robots "car top"
   set-default-shape lego-robotsac "car top"
   draw-world
   create-lego-robots 1 [set color blue set size 4 setxy -13 -17 set heading 0 update-sensors-blue]
-  create-lego-robotsac 1 [set color green set size 4 setxy -17 -13 set heading 90 update-sensors-green]
+  create-lego-robotsac 1 [set color green set size 4 setxy 13 -17 set heading 0 update-sensors-green]
   reset-ticks
 end
 
-
-;;Lanes are yellow strips, obstacles and walls are red patches
 to draw-world
-  
-  ;draw lanes
+  ask patches with[
+    (pxcor >= min-pxcor + 4 and pxcor <= min-pxcor + 6) or 
+    (pxcor <= max-pxcor - 4 and pxcor >= max-pxcor - 6) or
+    (pycor >= min-pycor + 4 and pycor <= min-pycor + 6) or 
+    (pycor <= max-pycor - 4 and pycor >= max-pycor - 6)
+  ]
+  [set pcolor yellow]
+
   ask patches with 
-    [(pxcor >= min-pxcor + 4 and pxcor <= min-pxcor + 6)
-     or 
-     (pxcor <= max-pxcor - 4 and pxcor >= max-pxcor - 6) 
-     or
-     (pycor >= min-pycor + 4 and pycor <= min-pycor + 6) 
-     or (pycor <= max-pycor - 4 and pycor >= max-pycor - 6)
-    ]
-    [set pcolor yellow]
+  [abs pxcor = max-pxcor or abs pycor = max-pycor]
+  [ set pcolor red ]
   
-  ;draw left and right walls
-  ask patches with [abs pxcor = max-pxcor or abs pycor = max-pycor]
-    [ set pcolor red ]
-    
-  ;;To draw an obstacle (for part 3) use the following command:    
-  ask patches with [(pxcor >= 0) and (pxcor <= 2) and (pycor >= (max-pycor - 8))] [set pcolor red] 
-
+  ask patches with [(pxcor >= 0) and (pxcor <= 2) and (pycor >= (max-pycor - 8))]
+  [set pcolor red]
 end
-
-
-
-;;Primitives for moving the robot
 
 to go-forward
   if [pcolor] of patch-ahead 1 != red
-     [rotate 0 fd .1]
+    [rotate 0 fd .1]
 end
 
-
-to rotate [angle] ;  clockwise rotation
+to rotate [angle]
   rt random-normal angle motor-noise 
 end
 
-
-;;;Primitives for updating the sensors
-
 to update-sensors-blue
-   update-bump-sensor-blue
-   update-ultrasound-blue
+  update-bump-sensor-blue
+  update-ultrasound
 end
 
 to update-sensors-green
-   update-bump-sensor-green
-   update-ultrasound-green
+  update-bump-sensor-green
+  update-ultrasound
 end
  
- 
 to update-bump-sensor-blue
- let dist 4.75
- let found false
+  let dist 4.75
+  let found false
  
- while [not found and dist > 0] 
-      [ifelse [pcolor] of patch-ahead dist = red
-         [ifelse [pcolor] of patch-right-and-ahead 90 3 != yellow
-             [fd 3 rt 90 fd 6 lt 90 fd 6 lt 90 fd 6 rt 90]
-             [set found true set bump true]]
-         [set bump false]
-         set dist dist - 1
-         ]
+  while [not found and dist > 0] 
+    [       
+      ifelse [pcolor] of patch-ahead dist = red
+        [ifelse [pcolor] of patch-left-and-ahead 90 2 != yellow
+          [barrier] 
+          [set found true set bump true]
+        ]
+        [set bump false]        
+      set dist dist - 1
+    ]
 end
 
 to update-bump-sensor-green
- let dist 4.75
- let found false
+  let dist 4.75
+  let found false
  
- while [not found and dist > 0] 
-      [ifelse [pcolor] of patch-ahead dist = red
-         [ifelse [pcolor] of patch-left-and-ahead 90 3 != yellow
-             [fd 3 lt 90 fd 6 rt 90 fd 6 rt 90 fd 6 lt 90]
-             [set found true set bump true]]
-         [set bump false]
-         set dist dist - 1
-         ]
+  while [not found and dist > 0] 
+    [       
+      ifelse [pcolor] of patch-ahead dist = red
+        [ifelse [pcolor] of patch-right-and-ahead 90 2 != yellow
+          [barrier] 
+          [set found true set bump true]
+        ]
+        [set bump false]        
+      set dist dist - 1
+    ]
 end
 
-
-to update-ultrasound-blue
- let dist 1
- let found false
- 
- ;the next line gives the angle for the sonar to head out to hit the wall on the left of the robot
- ;to make this a sonar that heads out to the right of the robot change it to:
- ;let angle heading + 270 - (90 * int((heading + 45) / 90))
-
- let angle heading + 90 - 90 * int((heading + 45) / 90)
- while [not found] 
-       [
-         let p patch-left-and-ahead angle dist
-         if [pcolor] of p = red [
-         set found true 
-         ifelse moving-average?
-               [set ultrasound ((4 * ultrasound) + random-normal (distance p) ultrasound-noise) / 5 ]
-               [set ultrasound random-normal (distance p) ultrasound-noise ]]
-         set dist dist + 1
-       ]
-         
+to barrier
+   let dist 1
+  let found false
+   fd 2
+   if [pcolor] of patch-right-and-ahead 90 2 != yellow and [pcolor] of patch-left-and-ahead 90 2 != yellow
+      [ifelse [pcolor] of patch-right-and-ahead 90 5 = red
+         [lt 90 fd 5 rt 90 fd 8 rt 90 fd 5 lt 90]
+         [rt 90 fd 5 lt 90 fd 8 lt 90 fd 5 rt 90]         
+      ]
+           
 end
 
-to update-ultrasound-green
- let dist 1
- let found false
- 
- ;the next line gives the angle for the sonar to head out to hit the wall on the left of the robot
- ;to make this a sonar that heads out to the right of the robot change it to:
- ;let angle heading + 270 - (90 * int((heading + 45) / 90))
-
- let angle heading + 270 - 90 * int((heading + 45) / 90)
- while [not found] 
-       [
-         let p patch-left-and-ahead angle dist
-         if [pcolor] of p = red [
-         set found true 
-         ifelse moving-average?
-               [set ultrasound ((4 * ultrasound) + random-normal (distance p) ultrasound-noise) / 5 ]
-               [set ultrasound random-normal (distance p) ultrasound-noise ]]
-         set dist dist + 1
-       ] 
- 
+to detect-car
+  set nearby-classmates other turtles in-radius 4
+     if any? nearby-classmates
+     [rt 90 fd 1 lt 90 fd 2 jump]
 end
 
-
+to update-ultrasound
+  let dist 1
+  let found false
+  
+  ask lego-robots[
+    let angle heading + 90 - 90 * int((heading + 45) / 90)
+    while [not found] 
+    [
+      let p patch-left-and-ahead angle dist
+      if [pcolor] of p = red [
+        set found true 
+        ifelse moving-average?
+          [set ultrasound ((4 * ultrasound) + random-normal (distance p) ultrasound-noise) / 5 ]
+          [set ultrasound random-normal (distance p) ultrasound-noise ]]
+      set dist dist + 1
+    ]
+    detect-car  ;;Uncommit for car detection
+  ]
+  
+  ask lego-robotsac[
+    let angle heading + 270 - 90 * int((heading + 45) / 90)
+    while [not found] 
+    [
+      let p patch-right-and-ahead angle dist
+      if [pcolor] of p = red [
+        set found true 
+        ifelse moving-average?
+          [set ultrasound ((4 * ultrasound) + random-normal (distance p) ultrasound-noise) / 5 ]
+          [set ultrasound random-normal (distance p) ultrasound-noise ]]
+      set dist dist + 1
+    ] 
+    detect-car  ;;Uncommit for car detection
+  ]
+  
+  
+end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;VIRTUAL ROBOT CONTROL SECTION;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -149,78 +150,63 @@ end
 to turnaway-after-bump-blue
   update-sensors-blue
   ifelse bump
-    [rt 90]
+    [rt 90]  
     [go-forward]
 end
 
 to turnaway-after-bump-green
   update-sensors-green
   ifelse bump
-    [lt 90]    
+    [lt 90]  
     [go-forward]
 end
 
 to straight
   if [pcolor] of patch-left-and-ahead 45 2 != yellow
-     [rt 10]
+    [rt 10]
   if [pcolor] of patch-right-and-ahead 45 2 != yellow
-     [lt 10]
+    [lt 10]
 end
 
-
-to from-wall-blue
-     let distance-to-side ultrasound
-     turnaway-after-bump-blue
-     let new-distance-to-side ultrasound
-     if (new-distance-to-side > 6) and (new-distance-to-side > distance-to-side) ;outside the zone and moving away from lane
-        [rotate -1]                                                              ;compensatory correction left
-     if (new-distance-to-side < 4) and (new-distance-to-side < distance-to-side) ;inside the zone and moving away from lane
-        [rotate 1]
-        straight
-     update-plot
-end
-
-to from-wall-green
-     let distance-to-side ultrasound
-     turnaway-after-bump-green
-     let new-distance-to-side ultrasound
-     if (new-distance-to-side > 6) and (new-distance-to-side > distance-to-side) ;outside the zone and moving away from lane
-        [rotate -1]                                                              ;compensatory correction left
-     if (new-distance-to-side < 4) and (new-distance-to-side < distance-to-side) ;inside the zone and moving away from lane
-        [rotate 1]
-        straight
-     update-plot
-end
-
-to edge ; edging zone = a zone  between 4 and 6 units from the wall 
-  ask lego-robots 
-    [
-    
-     from-wall-blue
-     
-    ]
-    ask lego-robotsac 
-    [
-     
-     from-wall-green
-     
-    ]
+to edge
+  ask lego-robots[
+    let distance-to-side ultrasound
+    turnaway-after-bump-blue
+    let new-distance-to-side ultrasound
+    if (new-distance-to-side > 6) and (new-distance-to-side > distance-to-side) 
+    [rotate -1]                                                             
+    if (new-distance-to-side < 4) and (new-distance-to-side < distance-to-side) 
+    [rotate 1]
+    straight   
+    update-plot
+  ]
+  
+  ask lego-robotsac[
+    let distance-to-side ultrasound
+    turnaway-after-bump-green
+    let new-distance-to-side ultrasound
+    if (new-distance-to-side > 6) and (new-distance-to-side > distance-to-side) 
+    [rotate -1]                                                             
+    if (new-distance-to-side < 4) and (new-distance-to-side < distance-to-side) 
+    [rotate 1]
+    straight   
+    update-plot
+  ]
   tick
 end
-
   
 to update-plot
   set-current-plot "Ultrasound"
   set-current-plot-pen "distance"
-  plot [ultrasound] of lego-robot 0         ; plot xcor -- there's only one robot, so its id must be 0
-  if ticks > 1000                           ; don't change the range until we've plotted all the way across once 
-  [set-plot-x-range (ticks - 1000) ticks]   ; scroll the range of the plot so only the last 200 ticks are visible
+  plot [ultrasound] of lego-robot 0         
+  if ticks > 1000                         
+  [set-plot-x-range (ticks - 1000) ticks] 
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-210
+220
 10
-701
+711
 522
 18
 18
@@ -270,16 +256,16 @@ motor-noise
 motor-noise
 0
 1
-1
+0
 .1
 1
 NIL
 HORIZONTAL
 
 BUTTON
-26
+10
 56
-205
+210
 89
 NIL
 turnaway-after-bump-blue
@@ -302,7 +288,7 @@ ultrasound-noise
 ultrasound-noise
 0
 2
-2
+0
 .1
 1
 NIL
@@ -310,9 +296,9 @@ HORIZONTAL
 
 BUTTON
 63
-155
+181
 126
-188
+214
 NIL
 edge
 T
@@ -373,12 +359,12 @@ moving-average?
 -1000
 
 BUTTON
-30
-102
-209
-135
+5
+98
+214
+131
 NIL
-turnaway-after-bump-blue
+turnaway-after-bump-green
 T
 1
 T
