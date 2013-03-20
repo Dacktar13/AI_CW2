@@ -2,7 +2,7 @@ breed [lego-robots lego-robot]
 breed [lego-robotsac lego-robotac]
 
 lego-robots-own [ultrasound bump]
-lego-robotsac-own [ultrasound bump]
+lego-robotsac-own [ultrasoundac bump]
 
 turtles-own
 [
@@ -62,10 +62,9 @@ to update-bump-sensor-blue
   while [not found and dist > 0] 
     [       
       ifelse [pcolor] of patch-ahead dist = red
-        [ifelse [pcolor] of patch-left-and-ahead 90 2 != yellow
-          [barrier] 
+        
           [set found true set bump true]
-        ]
+        
         [set bump false]        
       set dist dist - 1
     ]
@@ -78,10 +77,9 @@ to update-bump-sensor-green
   while [not found and dist > 0] 
     [       
       ifelse [pcolor] of patch-ahead dist = red
-        [ifelse [pcolor] of patch-right-and-ahead 90 2 != yellow
-          [barrier] 
+         
           [set found true set bump true]
-        ]
+        
         [set bump false]        
       set dist dist - 1
     ]
@@ -102,7 +100,7 @@ end
 to detect-car
   set nearby-classmates other turtles in-radius 4
      if any? nearby-classmates
-     [rt 90 fd 2 lt 90 fd 2]
+     [rt 90 fd 1 lt 90 fd 2]
 end
 
 to update-ultrasound
@@ -161,50 +159,49 @@ to turnaway-after-bump-green
     [go-forward]
 end
 
-to straight
-  if [pcolor] of patch-left-and-ahead 45 2 != yellow
-    [rt 10]
-  if [pcolor] of patch-right-and-ahead 45 2 != yellow
-    [lt 10]
-end
+
 
 to edge
   ask lego-robots[
     let distance-to-side ultrasound
     turnaway-after-bump-blue
     let new-distance-to-side ultrasound
-    if (new-distance-to-side > 6) and (new-distance-to-side > distance-to-side) 
+    if (new-distance-to-side > 5) and (new-distance-to-side > distance-to-side) 
     [rotate -1]                                                             
-    if (new-distance-to-side < 4) and (new-distance-to-side < distance-to-side) 
+    if (new-distance-to-side < 5) and (new-distance-to-side < distance-to-side) 
     [rotate 1]
-    straight   
-    update-plot
+       
+    update-plot-blue
   ]
   
   ask lego-robotsac[
-    let distance-to-side ultrasound
+    let distance-to-side ultrasoundac
     turnaway-after-bump-green
-    let new-distance-to-side ultrasound
-    if (new-distance-to-side > 6) and (new-distance-to-side > distance-to-side) 
+    let new-distance-to-side ultrasoundac
+    if (new-distance-to-side > 5) and (new-distance-to-side > distance-to-side) 
     [rotate -1]                                                             
-    if (new-distance-to-side < 4) and (new-distance-to-side < distance-to-side) 
+    if (new-distance-to-side < 5) and (new-distance-to-side < distance-to-side) 
     [rotate 1]
-    straight   
-    update-plot
+       
+    update-plot-green
   ]
   tick
 end
   
-to update-plot
+to update-plot-blue
   set-current-plot "Ultrasound"
   set-current-plot-pen "distance"
-  if blue-car = true[
-  plot [ultrasound] of lego-robot 0 ]
-  if green-car = true[
-    ifelse blue-car = true[][
-  plot [ultrasound] of lego-robotac 0 ]]   
-  if ticks > 1000                         
-  [set-plot-x-range (ticks - 1000) ticks] 
+  plot [ultrasound] of lego-robot 1         ; plot xcor -- there's only one robot, so its id must be 0
+  if ticks > 1000                           ; don't change the range until we've plotted all the way across once 
+  [set-plot-x-range (ticks - 1000) ticks]   ; scroll the range of the plot so only the last 200 ticks are visible
+end
+
+to update-plot-green
+  set-current-plot "Ultrasound"
+  set-current-plot-pen "distance"
+  plot [ultrasoundac] of lego-robotac 2         ; plot xcor -- there's only one robot, so its id must be 0
+  if ticks > 1000                           ; don't change the range until we've plotted all the way across once 
+  [set-plot-x-range (ticks - 1000) ticks]   ; scroll the range of the plot so only the last 200 ticks are visible
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -260,7 +257,7 @@ motor-noise
 motor-noise
 0
 1
-1
+0.2
 .1
 1
 NIL
@@ -292,7 +289,7 @@ ultrasound-noise
 ultrasound-noise
 0
 2
-2
+0.2
 .1
 1
 NIL
@@ -333,10 +330,10 @@ NIL
 1
 
 PLOT
-720
-132
-1122
-399
+718
+10
+1120
+277
 Ultrasound
 time
 Distance
@@ -386,7 +383,7 @@ SWITCH
 355
 car-detection
 car-detection
-0
+1
 1
 -1000
 
@@ -397,7 +394,7 @@ SWITCH
 315
 extra-wall
 extra-wall
-0
+1
 1
 -1000
 
@@ -462,6 +459,25 @@ Task 4, 5
 11
 0.0
 1
+
+PLOT
+719
+277
+1119
+493
+Ultrasoundac
+time
+Distance
+0.0
+1000.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" ""
+"distance" 1.0 0 -16777216 true "" ""
 
 @#$#@#$#@
 ## WHAT IS IT?
